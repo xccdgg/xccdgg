@@ -1,8 +1,9 @@
-import difflib
+import sys
 import re
+from difflib import SequenceMatcher
 
 def read_file(file_path):
-    """读取文件内容"""
+    """读取文件内容，如果文件不存在，返回None。"""
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             return file.read()
@@ -11,34 +12,38 @@ def read_file(file_path):
         return None
 
 def preprocess_text(text):
-    """预处理文本，去除所有非字母数字字符并转换为小写"""
-    text = re.sub(r'[^\w\s]', '', text)  # 移除所有非字母数字字符
-    text = text.lower()  # 转为小写
-    return text
+    """预处理文本，去除所有非字母数字字符并转换为小写。"""
+    return re.sub(r'[^\w\s]', '', text).lower()
 
 def calculate_similarity(text1, text2):
-    """计算两个文本的相似度"""
-    matcher = difflib.SequenceMatcher(None, text1, text2)
-    return matcher.ratio()
+    """计算两个文本的相似度，使用difflib库。"""
+    if not text1 or not text2:
+        return 0.0
+    return SequenceMatcher(None, text1, text2).ratio()
 
-if __name__ == "__main__":
-    import sys
+def main():
     if len(sys.argv) != 4:
-        print("使用方法: python main.py <原始文件路径> <修改后文件路径> <输出结果路径>")
+        print("使用方法: python main.py <原始文件路径> <抄袭版文件路径> <输出文件路径>")
         sys.exit(1)
     
-    orig_path, mod_path, output_path = sys.argv[1], sys.argv[2], sys.argv[3]
+    original_file, plagiarized_file, output_file = sys.argv[1], sys.argv[2], sys.argv[3]
     
-    orig_text = read_file(orig_path)
-    mod_text = read_file(mod_path)
+    original_text = read_file(original_file)
+    plagiarized_text = read_file(plagiarized_file)
     
-    if orig_text is None or mod_text is None:
-        sys.exit("读取文件时发生错误，请检查文件路径。")
+    if original_text is None or plagiarized_text is None:
+        print("一个或多个文件未找到。")
+        sys.exit(1)
     
-    orig_processed = preprocess_text(orig_text)
-    mod_processed = preprocess_text(mod_text)
+    original_processed = preprocess_text(original_text)
+    plagiarized_processed = preprocess_text(plagiarized_text)
     
-    similarity = calculate_similarity(orig_processed, mod_processed)
+    similarity = calculate_similarity(original_processed, plagiarized_processed)
     
-    with open(output_path, 'w', encoding='utf-8') as output_file:
-        output_file.write(f"相似度: {similarity:.2f}\n")
+    with open(output_file, 'w', encoding='utf-8') as file:
+        file.write(f"相似度: {similarity:.2f}\n")
+    
+    print(f"相似度计算完成，结果已写入 {output_file}")
+
+if __name__ == "__main__":
+    main()
